@@ -1,5 +1,6 @@
 import torch
 import random
+import config
 
 import numpy as np
 import pandas as pd
@@ -10,7 +11,7 @@ from transformers import AutoTokenizer, AutoModel
 from torch.utils.data import DataLoader
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() and config.use_gpu else "cpu")
 
 
 def compute_bin_metrics(eval_pred):

@@ -82,7 +82,7 @@ def validations(df, narrative_col, output_col):
         st.error("The output column must be binary (contain only zeros and ones)")
         st.stop()
     if not all([isinstance(i, str) for i in df[narrative_col].values]):
-        st.error("The narrative column must containt only text without empty entries")
+        st.error("The narrative column must containt only text")
         st.stop()
 
 st.write("### Upload data")
@@ -122,7 +122,8 @@ if state.model is not None:  # Training is complete
         btn_identify_phrases = st.form_submit_button("Identify Correlated Phrases")
         if btn_identify_phrases:
             identify_phrases()
-            cluster_phrases(sd_threshold=1.0, distance_threshold=1.25)
+            with st.spinner(text="Clustering phrases"):
+                cluster_phrases(sd_threshold=1.0, distance_threshold=1.25)
 
 if state.res_scores is not None:  # scores generation complete
     if st.button("Update generation parameters", disabled=state.show_params):
@@ -147,10 +148,11 @@ if state.res_scores is not None:  # scores generation complete
                 st.image(f"tmp/n_clusters_plot_{state.sess_id}.png")  
 
             if st.form_submit_button("Update"):
-                cluster_phrases(sd_threshold=sd_threshold, distance_threshold=dist_threshold)
-                dis_thres, n_clusters = clustering_sensit(state.embeddings)
-                plot_num_clusters(dis_thres, n_clusters, out_file=f"tmp/n_clusters_plot.png_{state.sess_id}", dpi=84)
-                st.experimental_rerun()
+                with st.spinner(text="Updating"):
+                    cluster_phrases(sd_threshold=sd_threshold, distance_threshold=dist_threshold)
+                    dis_thres, n_clusters = clustering_sensit(state.embeddings)
+                    plot_num_clusters(dis_thres, n_clusters, out_file=f"tmp/n_clusters_plot_{state.sess_id}.png", dpi=84)
+                    st.experimental_rerun()
 
 if state.res_clusters is not None:
     cluster_visualization(state.res_clusters, state.corpus, expand_dict(state.res_explan, 'expl', 'scores'),
