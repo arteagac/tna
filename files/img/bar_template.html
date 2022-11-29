@@ -1,0 +1,186 @@
+ <!DOCTYPE html>
+<html>
+
+<style>
+body { 
+  padding: .3rem;
+  font-family: Arial;
+  background-color: white;
+ }
+
+.card {
+  border-top: 1px solid;
+  padding-bottom: .5em;
+  padding-top: .5em;
+  vertical-align: top;
+  width: 100%;
+}
+
+.bar{
+  height: 20px;
+  background-color: #ff8c5e;
+  font-weight: bold;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.clust_info{
+  font-size: 13px;
+  font-style: italic;
+}
+
+.phrases{
+  font-size: 13px;
+  width: 100%;
+}
+
+.phrase{
+  color: #000000;
+  text-decoration: none;
+}
+
+.phrase:hover {
+    text-decoration: underline;
+    color: blue;
+}
+
+.title{
+    font-family: "Source Sans Pro", sans-serif;
+    font-weight: 600;
+    text-align: left;
+}
+
+.opt_show{
+  float:  right;
+  font-size: 14px;
+  margin-left: 25px;
+}
+
+.opt_show > *{
+    margin-left: 5px;
+    color: blue;
+
+}
+
+</style>
+
+<body>
+  <div class="title"><h2> Clusters of phrases correlated with output column</h2></div>
+
+  <div style="border: 1px solid; width: 360px; font-size: 14px;">
+     • <div class="bar" style="width: 12px; height: 12px; display: inline-block;"> </div> <div style="display: inline-block;">: Cluster importance</div>
+    <div> • Cluster title: Top 4 words in cluster</div>
+  </div>
+
+  <div id="limitOpts" class="opt_show"> Show per cluster: 
+    <a id="limit5" href="#" onclick="limit(5);return false;">5</a>
+    <a id="limit15" href="#" onclick="limit(15);return false;">15</a>
+    <a id="limit50" href="#" onclick="limit(50);return false;">50</a>
+    <a id="limit100" href="#" onclick="limit(100);return false;">100</a>
+    <a id="limitAll" href="#" onclick="limit('All');return false;">All</a>
+  </div>
+    
+  <div id="sortOpts" class="opt_show"> Sort by: 
+    <a id="sortbyfreq" href="#" onclick="sortby('freq');return false;">Num. Phrases</a>
+    <a id="sortbyscore" href="#" onclick="sortby('score');return false;">Mean Scores</a>
+  </div>
+
+<br/>
+<div id="container" class="card-container">
+
+</div>
+
+
+<script>
+
+
+const data = $python_data;
+
+function display(limit, sortBy){
+  container = document.getElementById("container")
+  container.innerHTML = ""
+    
+  const tot = sortBy == "freq"? data.children[0].children.length  : 1
+  for (const [i, cluster] of data.children.entries()) {
+      let divCard = document.createElement('div')
+      divCard.className = 'card'
+      
+      const phrasesDiv = document.createElement("div")
+      phrasesDiv.className = "phrases"
+      for (const [j, phrase] of cluster.children.entries()) {
+          if (limit != "All" && j > limit){
+              break;
+          }
+          
+          //const phraseHref = document.createElement("a")
+          //phraseHref.className = "phrase"
+          //phraseHref.href="#"
+          const phraseHref = document.createElement("span")
+          phraseHref.innerHTML = phrase.name
+          phrasesDiv.append(" \u2022 ")
+          phrasesDiv.append(phraseHref)
+      }
+      const metric = getMetric(cluster, sortBy)
+      const divBar = document.createElement("div")
+      divBar.className = "bar"
+      divBar.style.width = 100*(metric/tot)+"%";
+      //divBar.innerHTML = (i + 1) + ". " + cluster.name + " [Num Phrases=" + cluster.children.length + "; Mean Score="+ cluster.score +"]"
+      divBar.innerHTML = (i + 1) + ". " + cluster.name 
+      divCard.append(divBar)
+
+      const infoDiv = document.createElement("div")
+      infoDiv.className = "clust_info"
+      infoDiv.append("Num. Phrases= " + cluster.children.length + ";  Mean Score= "+ cluster.score +"")
+      divCard.append(infoDiv)
+
+      divCard.append(phrasesDiv)
+
+      container.appendChild(divCard)
+  }
+}
+
+function getMetric(cluster, sortBy){
+  return sortBy == "freq" ? cluster.children.length : cluster.score
+}
+
+function sortData(data, sortBy){
+      if(sortBy == "freq"){
+          data.children.sort((x, y) => y.children.length - x.children.length)
+      }else{
+          data.children.sort((x, y) => y.score - x.score)
+      }
+}
+
+function higlight(elemId, containerId){
+  Array.from(document.getElementById(containerId).children).forEach(x => {
+      x.style.backgroundColor = "white" //Remove highlight from other options
+  })
+  document.getElementById(elemId).style.backgroundColor = "lightblue"
+}
+
+function limit(lim){
+  higlight("limit"+lim, "limitOpts")
+  display(lim, statusSortBy)
+  statusLimit = lim
+}
+
+function sortby(field){
+  higlight("sortby"+field, "sortOpts")
+  sortData(data, field)
+  display(statusLimit, field)
+  statusSortBy = field
+}
+
+let statusSortBy = "freq"
+let statusLimit = 15
+
+data.children.sort((x, y) => y.children.length - x.children.length) // Sort initially by freq
+const totFreq = data.children.map(x => x.children.length).reduce((a, b) => a + b, 0)
+const totScores = data.children.map(x => x.score).reduce((a, b) => a + b, 0)
+higlight("limit"+statusLimit, "limitOpts")
+sortby(statusSortBy)
+
+</script>
+</body>
+
+</html>
