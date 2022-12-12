@@ -21,8 +21,8 @@ def load_df_data(df, narr_col, out_col, ids_col=None, min_stc_len=20):
     docs = df[narr_col].astype(str)
     docs = [clean_record(doc) for doc in docs]
     labels = df[out_col].values.astype(int)
-    unique_ids = df[ids_col].values if ids_col is not None else np.arange(len(docs))
-    return docs, labels, unique_ids
+    unique_ids = df[ids_col].values if ids_col is not None else np.arange(len(docs), dtype=int)
+    return docs, labels, unique_ids.astype('U32')
 
 
 def load_csv_data(path, narr_col, out_col, ids_col=None, min_stc_len=20):

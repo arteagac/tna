@@ -20,7 +20,7 @@ def init_state(key, value):
 
 init_state('show_params', False)
 
-for s in ['model', 'docs', 'labels', 'unique_ids', 'res_scores', 'res_explan', 'res_clusters', 'corpus', 'embeddings']:
+for s in ['model', 'docs', 'labels', 'uq_ids', 'res_scores', 'res_explan', 'res_clusters', 'corpus', 'embeddings']:
     init_state(s, None)
 
 if 'embedder' not in state:
@@ -42,9 +42,9 @@ def load_data(uploaded_file):
     return data
 
 
-def run_training(df, narrative_column, output_column, training_epochs):
-    docs, labels, unique_ids = load_df_data(df, narrative_column, output_column, min_stc_len=20)
-    state.docs, state.labels, state.unique_ids = docs, labels, unique_ids
+def run_training(df, narrative_column, output_column, training_epochs, ids_col):
+    docs, labels, uq_ids = load_df_data(df, narrative_column, output_column, ids_col=ids_col, min_stc_len=20)
+    state.docs, state.labels, state.uq_ids = docs, labels, uq_ids
     train_docs, test_docs, train_labels, test_labels = split_data(docs, labels)
     max_stc_len = comput_max_stc_len(docs)
     state.tokenizer.model_max_length = max_stc_len
@@ -55,7 +55,7 @@ def run_training(df, narrative_column, output_column, training_epochs):
     update_pg_bar = lambda n, _ : training_progres_bar.progress((n + 1) / training_epochs)
     train_res = train(model, train_dataset, test_dataset, n_epochs=training_epochs, epoch_callback=update_pg_bar) 
     plot_train_loss(train_res.summary_df(), out_file=f"tmp/epochs_plot_{state.sess_id}.png", dpi=84)
-    return train_res, model
+    return model
    
 def identify_phrases():
     predict_fn = lambda x: predict_docs_batch(x, state.model, state.tokenizer, batch_size=64, hf_model=False)
@@ -63,12 +63,11 @@ def identify_phrases():
     
     gen_progres_bar = st.progress(0)
     update_pg_bar = lambda n : gen_progres_bar.progress(n / len(samples_idx))
-    state.res_scores = texpl_scores_all(samples_idx, state.docs, state.unique_ids, ws=6, predict_fn=predict_fn,
-                                        progress_cb=update_pg_bar)
+    state.res_scores = texpl_scores_all(samples_idx, state.docs, ws=6, predict_fn=predict_fn, progress_cb=update_pg_bar)
 
 def cluster_phrases(sd_threshold=1.0, distance_threshold=1.25):
-    state.res_explan = texpl_peakdet_process(state.res_scores, state.docs, sd_threshold=sd_threshold)
-    state.corpus = expand_dict(state.res_explan, 'expl', 'text')
+    state.res_explan = texpl_peakdet_process(state.res_scores, state.docs, state.uq_ids, sd_threshold=sd_threshold)
+    state.corpus = expand_dict(state.res_explan, 'text')
     state.embeddings = embed_corpus(state.corpus, state.embedder)
     state.res_clusters = cluster_embeddings(state.embeddings, distance_threshold=distance_threshold)
     
@@ -79,7 +78,7 @@ def validations(df, narrative_col, output_col):
         st.stop()
     labels = df[output_col].values
     if not set(1*np.unique(labels[~np.isnan(labels)])).issubset({0, 1}):
-        st.error("The output column must be binary (contain only zeros and ones)")
+        st.error("The target column must be binary (contain only zeros and ones)")
         st.stop()
     if not all([isinstance(i, str) for i in df[narrative_col].values]):
         st.error("The narrative column must containt only text")
@@ -93,23 +92,28 @@ if uploaded_file is not None:
     df_cols = list(df.columns.values)
     st.write("### Select analysis parameters")
     with st.form("training_form"):
-        lay_col1, lay_col2, lay_col3, _ = st.columns([1, 1, 1, 3])
+        lay_col1, lay_col2, lay_col3, lay_col4, _ = st.columns([1, 1, 1, 1, 4])
         with lay_col1:
             narrative_col = st.selectbox('Narrative column *', [''] + df_cols,
                                          help="Column that contains the text narrative")
         
         with lay_col2:
-            output_col = st.selectbox('Output column *', [''] + df_cols,
+            output_col = st.selectbox('Target column *', [''] + df_cols,
                                       help="Column that contains the binary output variable (1s and 0s)")
         
         with lay_col3:
-            training_epochs = st.number_input('Training Epochs', value=10, help="Number of epochs to train model")
+            training_epochs = st.number_input('Training Epochs', value=10, help="Number of epochs for model training")
+        
+        with lay_col4:
+            ids_col = st.selectbox('Unique IDs column', [''] + df_cols,
+                                         help="Column that contains the unique IDs")
 
         st.caption("(*) Required")
         btn_run_training = st.form_submit_button("Run Training")
         if btn_run_training:
             validations(df, narrative_col, output_col)
-            train_res, state.model = run_training(df, narrative_col, output_col, training_epochs)
+            state.model = run_training(df, narrative_col, output_col,
+                                       training_epochs, ids_col if ids_col != '' else None)
             state.res_explan, state.res_clusters, state.res_scores = None, None, None  # Disable further stages
 
 
@@ -155,10 +159,15 @@ if state.res_scores is not None:  # scores generation complete
                     st.experimental_rerun()
 
 if state.res_clusters is not None:
-    cluster_visualization(state.res_clusters, state.corpus, expand_dict(state.res_explan, 'expl', 'scores'),
-                          template_file=f"files/img/bar_template.html", out_file=f"tmp/bar_{state.sess_id}.html")
-    components.html(read_file(f"tmp/bar_{state.sess_id}.html"), width=1300, height=2000, scrolling=True)
-    with open(f"tmp/bar_{state.sess_id}.html", "rb") as f:
+    cluster_visualization(state.res_clusters, state.corpus, expand_dict(state.res_explan, 'scores'),
+                          expand_dict(state.res_explan, 'uq_ids'), template_file=f"files/img/bar_template.html",
+                          out_file=f"tmp/bar_{state.sess_id}.html")
+    components.html(read_file(
+        f"tmp/bar_{state.sess_id}.html"
+    ), width=1300, height=2000, scrolling=True)
+    with open(
+        f"tmp/bar_{state.sess_id}.html"
+        , "rb") as f:
         st.download_button(label="Download", data=f, file_name=f'correlated_phrases_{state.sess_id}.html',
                            mime='text/html')
     

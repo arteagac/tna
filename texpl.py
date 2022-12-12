@@ -32,21 +32,20 @@ def texpl_peakdet(scores_dict, sd_threshold=1.2, min_expl_len=2):
     return explan_idx, explan_scores
 
 
-def texpl_peakdet_process(res_scores, docs, sd_threshold=1.2):
+def texpl_peakdet_process(res_scores, docs, uq_ids, sd_threshold=1.2):
     res_explan = []
     for rs in res_scores:
         explan_idx, explan_scores = texpl_peakdet(rs['scores'], sd_threshold=sd_threshold)
         text_arr = np.array(docs[rs['idx']].split())
         explan_text = [' '.join(text_arr[x]) for x in explan_idx]
-        res_explan.append({'idx': rs['idx'], 'expl': {'text': explan_text, 'scores': explan_scores}})
+        res_explan.append({'text': explan_text, 'scores': explan_scores, 'uq_ids': [uq_ids[rs['idx']]]*len(explan_idx)})
     return res_explan
 
 
-def texpl_scores_all(idx_list, docs, unique_ids, ws=5, predict_fn=None, progress_cb=None):
+def texpl_scores_all(idx_list, docs, ws=5, predict_fn=None, progress_cb=None):
     res = []
     for i, idx in enumerate(idx_list):
-        res.append({'idx': idx, 'unique_id': unique_ids[idx],
-             'scores': texpl_scores(docs[idx], ws=ws, predict_fn=predict_fn)})
+        res.append({'idx': idx, 'scores': texpl_scores(docs[idx], ws=ws, predict_fn=predict_fn)})
         if progress_cb is not None:
             progress_cb(i+1)
     return res

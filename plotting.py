@@ -24,7 +24,7 @@ def plot_train_loss(rdf, out_file=None, dpi=300):
         plt.savefig(out_file, dpi=dpi)
 
     
-def cluster_visualization(res_clusters, corpus, scores, template_file, out_file):
+def cluster_visualization(res_clusters, corpus, scores, uq_ids, template_file, out_file):
     clusters_json = []
     scores = np.array(scores)
     for c in np.unique(res_clusters):
@@ -32,9 +32,13 @@ def cluster_visualization(res_clusters, corpus, scores, template_file, out_file)
         top_words = compute_top_words([corpus[i] for i in in_cluster], n_top=4)
         clusters_json.append(
             {'name': ', '.join(top_words), 'score': round(float(scores[in_cluster].mean()), 3),
-             'children': [{'name': corpus[i], 'score': round(float(scores[i]), 3) } for i in in_cluster]})
+             'children': [{
+                 'name': corpus[i],
+                 'score': round(float(scores[i]), 3),
+                 'id': uq_ids[i]
+             } for i in in_cluster]})
+    
     clusters_json = {'name': '', 'children': clusters_json}
-
     d3_src = Template(read_file(template_file))
 
     html_src = d3_src.substitute({'python_data': json.dumps(clusters_json, indent=4)})

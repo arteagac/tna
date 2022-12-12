@@ -115,10 +115,11 @@ function display(limit, sortBy){
           //const phraseHref = document.createElement("a")
           //phraseHref.className = "phrase"
           //phraseHref.href="#"
-          const phraseHref = document.createElement("span")
-          phraseHref.innerHTML = phrase.name
+          const phraseSpan = document.createElement("span")
+          phraseSpan.innerHTML = phrase.name
+          phraseSpan.title = "ID: "+phrase.id
           phrasesDiv.append(" \u2022 ")
-          phrasesDiv.append(phraseHref)
+          phrasesDiv.append(phraseSpan)
       }
       const metric = getMetric(cluster, sortBy)
       const divBar = document.createElement("div")
