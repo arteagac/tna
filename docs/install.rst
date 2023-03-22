@@ -1,6 +1,6 @@
 Installation
 ============
-TNA is a web application that runs on a Python backend. It uses Streamlit for web rendering, PyTorch and HuggingFace Transformers for model training, as well as Pandas, Numpy, and Scikit-Learn for data handling. The installation steps below install all the required Python dependencies.
+TNA is a web application that runs on a Python backend. It uses Streamlit for web rendering, PyTorch and HuggingFace Transformers for model training, as well as Pandas, Numpy, and Scikit-Learn for data handling. The steps below install all the required Python dependencies.
 
 TNA can be installed on Windows, Linux, or Mac, as the only dependency is a functional Python environment with support for the aforementioned libraries.
 
@@ -30,3 +30,5 @@ Open a command line, navigate to the project folder, and execute::
 This will open a new tab in your web browser, as illustrated in the figure below. Alternatively, you can navigate to your localhost URL at the default streamlit's port 8501.
 
 .. image:: img/main_window.png
+
+TNA can be installed locally (on a single computer) or on a server and can be accessed using the IP address of the server and the default port 8501. For troubleshooting of server installation check `Streamlit's instructions to enable remote acces <https://docs.streamlit.io/knowledge-base/deploy/remote-start>`_

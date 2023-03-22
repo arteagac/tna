@@ -6,5 +6,5 @@ TNA (Text Narratives Analyzer) is an open-source tool to find potential correlat
 .. image:: img/overview.png
 
 
-TNA was initially coincived for analysis of crash narratives, but the correlation-finding approach can be applied to other data sources, as shown in the "Tutorial" section, in which a dataset of movie reviews is used for demonstration purposes. 
+TNA was initially conceived for analysis of crash narratives, but the correlation-finding approach can be applied to other data sources, as shown in the "Tutorial" section, in which a dataset of movie reviews is used for demonstration purposes. 
 

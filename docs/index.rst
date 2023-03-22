@@ -1,4 +1,3 @@
-.. include:: overview.rst
 
 
 .. toctree::
@@ -27,3 +26,8 @@
    :maxdepth: 2
 
    limitations
+   
+.. toctree::
+   :maxdepth: 2
+
+   acknowledgments

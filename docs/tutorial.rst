@@ -25,7 +25,7 @@ Note that after reducing the number of epochs to 6 (a.k.a early stopping),  that
 .. image:: img/training_results2.png
 
 
-Step 2. Identification and clustering of correlated phrases
+Step 3. Identification and clustering of correlated phrases
 -----------------------------------------------------------
 
 Finally, after the training is complete, you just need to click the "Identify phrases" button to execute the sliding-window and peak detection approaches, which extract all the phrases potentially correlated with the target column and cluster such phrases by similarity. The output of the tool is a set of clusters that group similar phrases in the narratives identified as correlated with the output column. The output includes the four most common words on each cluster, the number of phrases within the clusters, and the average correlation of the phrases within that cluster. By default the output shows 15 sample phrases, but provides an option to change the number of phrases to display (top right of the screen). 
@@ -33,3 +33,7 @@ Finally, after the training is complete, you just need to click the "Identify ph
 .. image:: img/final_clusters.png
 
 The output shows that the tool identified phrases that describe "great film", "good movie", "great story", "great character" as correlated with positive movie reviews. To better tune the output of the system, you can click the "Update generation parameters" button, which provides options to select a higher or lower threshold for the peak detection algorithm (to define a desired correlation strength) and the number of clusters to be generated.
+
+Analysis of quantitative data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+For analysis of quantitative data, this project includes an open-source Python library called `xlogit <https://github.com/arteagac/xlogit>`_. This library conducts statistical-based analysis (Logit and Multinomial Logit) to identify potential causality associations between a set of factors and a desired target class. For example, for traffic safety analysis `xlogit <https://github.com/arteagac/xlogit>`_ identifies potential causality associations between crash factors and severe crashes. For instructions on how to use `xlogit <https://github.com/arteagac/xlogit>`_, please follow `xlogit's documentation and examples <https://xlogit.readthedocs.io/en/latest/notebooks/multinomial_model.html>`_.
